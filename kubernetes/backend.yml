@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: exam
+spec:
+  ports:
+    - port: 5000
+      protocol: TCP
+  selector:
+    app: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: exam
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: lasryanass/exam:backendv2 #backend (v2: mongodb simple version) (v3: mongodb cluster version)
+          startupProbe:
+            httpGet:
+              port: nodejs-port
+              path: /ready
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: nodejs-port
+              path: /health
+            failureThreshold: 1
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              port: nodejs-port
+              path: /ready
+            failureThreshold: 1
+            periodSeconds: 10
+          env:       
+            # version 2
+            - name: MONGODB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: username
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: password
+            - name: MONGODB_SERVICE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-configmap
+                  key: serviceName
+            - name: MONGODB_HEADER
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-configmap
+                  key: databaseHeader
+            - name: MONGODB_DBNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mongodb-configmap
+                  key: databaseName  
+            # version 3
+            # - name: MONGODB_CONNECTION_STRING
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: mongodbcluster-admin-lasryanass
+            #       key: connectionString.standard    
+          ports:
+            - containerPort: 5000
+              name: nodejs-port

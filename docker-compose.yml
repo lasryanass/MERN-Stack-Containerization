@@ -1,0 +1,36 @@
+version: "3"
+services:
+  frontend:
+    container_name: frontend
+    #image: lasryanass/exam:frontendv1
+    image: localhost:5001/frontend
+    ports: 
+      - "3000:80"
+    networks:
+      - my-bridge-network
+  backend:
+    container_name: backend
+    #image: lasryanass/exam:backendv1
+    image: localhost:5001/backend
+    ports:
+      - "5000:5000"
+    networks:
+      - my-bridge-network
+    depends_on:
+      - mongo
+  mongo:
+    container_name: mongodb-service
+    #image: mongo
+    image: localhost:5001/mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - my-bridge-network
+    volumes:
+      - mongo-data:/data/db
+networks:
+  my-bridge-network:
+    driver: bridge
+volumes:
+  mongo-data:
+    driver: local

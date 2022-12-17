@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodbclustersecret
+  namespace: exam
+type: Opaque
+stringData:
+  password: lasryanassexam
+---
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: mongodbcluster
+  namespace: exam
+spec:
+  members: 2
+  type: ReplicaSet
+  version: "4.2.9"
+  security:
+    authentication:
+      modes: ["SCRAM"]
+  users:
+    - name: lasryanass
+      db: admin
+      passwordSecretRef:
+        name: mongodbclustersecret
+      roles:
+        - name: clusterAdmin
+          db: admin
+        - name: userAdminAnyDatabase
+          db: admin
+        - name: readWriteAnyDatabase
+          db: admin
+        - name: root
+          db: admin
+      scramCredentialsSecretName: my-scram
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongodb-agent
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
